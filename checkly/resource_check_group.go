@@ -1,7 +1,9 @@
 package checkly
 
 import (
+	"encoding/json"
 	"fmt"
+	"log"
 	"sort"
 	"strconv"
 	"strings"
@@ -293,6 +295,8 @@ func resourceCheckGroupRead(d *schema.ResourceData, client interface{}) error {
 		}
 		return fmt.Errorf("API error12: %w", err)
 	}
+	jsona, _ := json.Marshal(group)
+	log.Println(string(jsona))
 	return resourceDataFromCheckGroup(&group, d)
 }
 
