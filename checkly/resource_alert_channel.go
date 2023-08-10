@@ -12,42 +12,51 @@ import (
 )
 
 const (
-	AcFieldEmail              = "email"
-	AcFieldEmailAddress       = "address"
-	AcFieldSlack              = "slack"
-	AcFieldSlackURL           = "url"
-	AcFieldSlackChannel       = "channel"
-	AcFieldSMS                = "sms"
-	AcFieldSMSName            = "name"
-	AcFieldSMSNumber          = "number"
-	AcFieldWebhook            = "webhook"
-	AcFieldWebhookName        = "name"
-	AcFieldWebhookMethod      = "method"
-	AcFieldWebhookHeaders     = "headers"
-	AcFieldWebhookQueryParams = "query_parameters"
-	AcFieldWebhookTemplate    = "template"
-	AcFieldWebhookURL         = "url"
-	AcFieldWebhookSecret      = "webhook_secret"
-	AcFieldOpsgenie           = "opsgenie"
-	AcFieldOpsgenieName       = "name"
-	AcFieldOpsgenieAPIKey     = "api_key"
-	AcFieldOpsgenieRegion     = "region"
-	AcFieldOpsgeniePriority   = "priority"
-	AcFieldSendRecovery       = "send_recovery"
-	AcFieldSendFailure        = "send_failure"
-	AcFieldSendDegraded       = "send_degraded"
-	AcFieldSSLExpiry          = "ssl_expiry"
-	AcFieldSSLExpiryThreshold = "ssl_expiry_threshold"
+	AcFieldEmail                = "email"
+	AcFieldEmailAddress         = "address"
+	AcFieldSlack                = "slack"
+	AcFieldSlackURL             = "url"
+	AcFieldSlackChannel         = "channel"
+	AcFieldSMS                  = "sms"
+	AcFieldSMSName              = "name"
+	AcFieldSMSNumber            = "number"
+	AcFieldWebhook              = "webhook"
+	AcFieldWebhookName          = "name"
+	AcFieldWebhookMethod        = "method"
+	AcFieldWebhookHeaders       = "headers"
+	AcFieldWebhookQueryParams   = "query_parameters"
+	AcFieldWebhookTemplate      = "template"
+	AcFieldWebhookURL           = "url"
+	AcFieldWebhookSecret        = "webhook_secret"
+	AcFieldWebhookType          = "webhook_type"
+	AcFieldOpsgenie             = "opsgenie"
+	AcFieldOpsgenieName         = "name"
+	AcFieldOpsgenieAPIKey       = "api_key"
+	AcFieldOpsgenieRegion       = "region"
+	AcFieldOpsgeniePriority     = "priority"
+	AcFieldPagerduty            = "pagerduty"
+	AcFieldPagerdutyAccount     = "account"
+	AcFieldPagerdutyServiceKey  = "service_key"
+	AcFieldPagerdutyServiceName = "service_name"
+	AcFieldSendRecovery         = "send_recovery"
+	AcFieldSendFailure          = "send_failure"
+	AcFieldSendDegraded         = "send_degraded"
+	AcFieldSSLExpiry            = "ssl_expiry"
+	AcFieldSSLExpiryThreshold   = "ssl_expiry_threshold"
+	AcFieldCall                 = "call"
+	AcFieldCallName             = "name"
+	AcFieldCallNumber           = "number"
 )
 
 func resourceAlertChannel() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceAlertChannelCreate,
-		Read:   resourceAlertChannelRead,
-		Update: resourceAlertChannelUpdate,
-		Delete: resourceAlertChannelDelete,
+		Description: "Allows you to define alerting channels for the checks and groups in your account",
+		Create:      resourceAlertChannelCreate,
+		Read:        resourceAlertChannelRead,
+		Update:      resourceAlertChannelUpdate,
+		Delete:      resourceAlertChannelDelete,
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 		Schema: map[string]*schema.Schema{
 			AcFieldEmail: {
@@ -57,8 +66,9 @@ func resourceAlertChannel() *schema.Resource {
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						AcFieldEmailAddress: {
-							Type:     schema.TypeString,
-							Required: true,
+							Type:        schema.TypeString,
+							Required:    true,
+							Description: "The email address of this email alert channel.",
 						},
 					},
 				},
@@ -70,12 +80,14 @@ func resourceAlertChannel() *schema.Resource {
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						AcFieldSlackURL: {
-							Type:     schema.TypeString,
-							Required: true,
+							Type:        schema.TypeString,
+							Required:    true,
+							Description: "The Slack webhook URL",
 						},
 						AcFieldSlackChannel: {
-							Type:     schema.TypeString,
-							Required: true,
+							Type:        schema.TypeString,
+							Required:    true,
+							Description: "The name of the alert's Slack channel",
 						},
 					},
 				},
@@ -87,12 +99,33 @@ func resourceAlertChannel() *schema.Resource {
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						AcFieldSMSName: {
-							Type:     schema.TypeString,
-							Required: true,
+							Type:        schema.TypeString,
+							Required:    true,
+							Description: "The name of this alert channel",
 						},
 						AcFieldSMSNumber: {
-							Type:     schema.TypeString,
-							Required: true,
+							Type:        schema.TypeString,
+							Required:    true,
+							Description: "The mobile number to receive the alerts",
+						},
+					},
+				},
+			},
+			AcFieldCall: {
+				Type:     schema.TypeSet,
+				Optional: true,
+				MaxItems: 1,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						AcFieldCallName: {
+							Type:        schema.TypeString,
+							Required:    true,
+							Description: "The name of this alert channel",
+						},
+						AcFieldCallNumber: {
+							Type:        schema.TypeString,
+							Required:    true,
+							Description: "The mobile number to receive the alerts",
 						},
 					},
 				},
@@ -108,8 +141,10 @@ func resourceAlertChannel() *schema.Resource {
 							Required: true,
 						},
 						AcFieldWebhookMethod: {
-							Type:     schema.TypeString,
-							Required: true,
+							Type:        schema.TypeString,
+							Optional:    true,
+							Default:     "POST",
+							Description: "(Default `POST`)",
 						},
 						AcFieldWebhookHeaders: {
 							Type:     schema.TypeMap,
@@ -133,11 +168,30 @@ func resourceAlertChannel() *schema.Resource {
 						},
 						AcFieldWebhookURL: {
 							Type:     schema.TypeString,
-							Optional: true,
+							Required: true,
 						},
 						AcFieldWebhookSecret: {
 							Type:     schema.TypeString,
 							Optional: true,
+						},
+						AcFieldWebhookType: {
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: "Type of the webhook. Possible values are 'WEBHOOK_DISCORD', 'WEBHOOK_FIREHYDRANT', 'WEBHOOK_GITLAB_ALERT', 'WEBHOOK_SPIKESH', 'WEBHOOK_SPLUNK', 'WEBHOOK_MSTEAMS' and 'WEBHOOK_TELEGRAM'.",
+							ValidateFunc: func(value interface{}, key string) (warns []string, errs []error) {
+								v := value.(string)
+								isValid := false
+								options := []string{"WEBHOOK_DISCORD", "WEBHOOK_FIREHYDRANT", "WEBHOOK_GITLAB_ALERT", "WEBHOOK_SPIKESH", "WEBHOOK_SPLUNK", "WEBHOOK_MSTEAMS", "WEBHOOK_TELEGRAM"}
+								for _, option := range options {
+									if v == option {
+										isValid = true
+									}
+								}
+								if !isValid {
+									errs = append(errs, fmt.Errorf("%q must be one of %v, got %s", key, options, v))
+								}
+								return warns, errs
+							},
 						},
 					},
 				},
@@ -167,30 +221,65 @@ func resourceAlertChannel() *schema.Resource {
 					},
 				},
 			},
-			AcFieldSendRecovery: {
-				Type:     schema.TypeBool,
+			AcFieldPagerduty: {
+				Type:     schema.TypeSet,
 				Optional: true,
-				Default:  true,
+				MaxItems: 1,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						AcFieldPagerdutyServiceKey: {
+							Type:     schema.TypeString,
+							Required: true,
+						},
+						AcFieldPagerdutyServiceName: {
+							Type:     schema.TypeString,
+							Optional: true,
+						},
+						AcFieldPagerdutyAccount: {
+							Type:     schema.TypeString,
+							Optional: true,
+						},
+					},
+				},
+			},
+			AcFieldSendRecovery: {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     true,
+				Description: "(Default `true`)",
 			},
 			AcFieldSendFailure: {
-				Type:     schema.TypeBool,
-				Optional: true,
-				Default:  true,
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     true,
+				Description: "(Default `true`)",
 			},
 			AcFieldSendDegraded: {
-				Type:     schema.TypeBool,
-				Optional: true,
-				Default:  false,
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+				Description: "(Default `false`)",
 			},
 			AcFieldSSLExpiry: {
-				Type:     schema.TypeBool,
-				Optional: true,
-				Default:  false,
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+				Description: "(Default `false`)",
 			},
 			AcFieldSSLExpiryThreshold: {
 				Type:     schema.TypeInt,
 				Optional: true,
 				Default:  30,
+				ValidateFunc: func(val interface{}, key string) (warns []string, errs []error) {
+					min := 1
+					max := 30
+					v := val.(int)
+					if v < min || v > max {
+						errs = append(errs, fmt.Errorf("%q must be between %d and  %d, got: %d", key, min, max, v))
+					}
+					return warns, errs
+				},
+				Description: "Value must be between 1 and 30 (Default `30`)",
 			},
 		},
 	}
@@ -267,9 +356,11 @@ func resourceAlertChannelDelete(d *schema.ResourceData, client interface{}) erro
 func resourceDataFromAlertChannel(it *checkly.AlertChannel, d *schema.ResourceData) error {
 	d.Set(AcFieldEmail, setFromEmail(it.Email))
 	d.Set(AcFieldSMS, setFromSMS(it.SMS))
+	d.Set(AcFieldCall, setFromCall(it.CALL))
 	d.Set(AcFieldSlack, setFromSlack(it.Slack))
 	d.Set(AcFieldWebhook, setFromWebhook(it.Webhook))
 	d.Set(AcFieldOpsgenie, setFromOpsgenie(it.Opsgenie))
+	d.Set(AcFieldPagerduty, setFromPagerduty(it.Pagerduty))
 	if it.SendRecovery != nil {
 		d.Set(AcFieldSendRecovery, *it.SendRecovery)
 	}
@@ -315,7 +406,7 @@ func alertChannelFromResourceData(d *schema.ResourceData) (checkly.AlertChannel,
 		ac.SSLExpiryThreshold = &i
 	}
 
-	fields := []string{AcFieldEmail, AcFieldSMS, AcFieldSlack, AcFieldWebhook, AcFieldOpsgenie}
+	fields := []string{AcFieldEmail, AcFieldSMS, AcFieldCall, AcFieldSlack, AcFieldWebhook, AcFieldOpsgenie, AcFieldPagerduty}
 	setCount := 0
 	for _, field := range fields {
 		cfgSet := (d.Get(field)).(*schema.Set)
@@ -350,6 +441,11 @@ func alertChannelConfigFromSet(channelType string, s *schema.Set) (interface{}, 
 			Name:   cfg[AcFieldSMSName].(string),
 			Number: cfg[AcFieldSMSNumber].(string),
 		}, nil
+	case checkly.AlertTypeCall:
+		return &checkly.AlertChannelCall{
+			Name:   cfg[AcFieldCallName].(string),
+			Number: cfg[AcFieldCallNumber].(string),
+		}, nil
 	case checkly.AlertTypeSlack:
 		return &checkly.AlertChannelSlack{
 			Channel:    cfg[AcFieldSlackChannel].(string),
@@ -362,6 +458,12 @@ func alertChannelConfigFromSet(channelType string, s *schema.Set) (interface{}, 
 			Region:   cfg[AcFieldOpsgenieRegion].(string),
 			Priority: cfg[AcFieldOpsgeniePriority].(string),
 		}, nil
+	case checkly.AlertTypePagerduty:
+		return &checkly.AlertChannelPagerduty{
+			Account:     cfg[AcFieldPagerdutyAccount].(string),
+			ServiceKey:  cfg[AcFieldPagerdutyServiceKey].(string),
+			ServiceName: cfg[AcFieldPagerdutyServiceName].(string),
+		}, nil
 	case checkly.AlertTypeWebhook:
 		return &checkly.AlertChannelWebhook{
 			Name:            cfg[AcFieldWebhookName].(string),
@@ -369,6 +471,7 @@ func alertChannelConfigFromSet(channelType string, s *schema.Set) (interface{}, 
 			Template:        cfg[AcFieldWebhookTemplate].(string),
 			URL:             cfg[AcFieldWebhookURL].(string),
 			WebhookSecret:   cfg[AcFieldWebhookSecret].(string),
+			WebhookType:     cfg[AcFieldWebhookType].(string),
 			Headers:         keyValuesFromMap(cfg[AcFieldWebhookHeaders].(tfMap)),
 			QueryParameters: keyValuesFromMap(cfg[AcFieldWebhookQueryParams].(tfMap)),
 		}, nil
@@ -399,6 +502,18 @@ func setFromSMS(cfg *checkly.AlertChannelSMS) []tfMap {
 	}
 }
 
+func setFromCall(cfg *checkly.AlertChannelCall) []tfMap {
+	if cfg == nil {
+		return []tfMap{}
+	}
+	return []tfMap{
+		{
+			AcFieldCallName:   cfg.Name,
+			AcFieldCallNumber: cfg.Number,
+		},
+	}
+}
+
 func setFromSlack(cfg *checkly.AlertChannelSlack) []tfMap {
 	if cfg == nil {
 		return []tfMap{}
@@ -424,6 +539,7 @@ func setFromWebhook(cfg *checkly.AlertChannelWebhook) []tfMap {
 			AcFieldWebhookTemplate:    cfg.Template,
 			AcFieldWebhookURL:         cfg.URL,
 			AcFieldWebhookSecret:      cfg.WebhookSecret,
+			AcFieldWebhookType:        cfg.WebhookType,
 		},
 	}
 }
@@ -438,6 +554,19 @@ func setFromOpsgenie(cfg *checkly.AlertChannelOpsgenie) []tfMap {
 			AcFieldOpsgenieAPIKey:   cfg.APIKey,
 			AcFieldOpsgenieRegion:   cfg.Region,
 			AcFieldOpsgeniePriority: cfg.Priority,
+		},
+	}
+}
+
+func setFromPagerduty(cfg *checkly.AlertChannelPagerduty) []tfMap {
+	if cfg == nil {
+		return []tfMap{}
+	}
+	return []tfMap{
+		{
+			AcFieldPagerdutyAccount:     cfg.Account,
+			AcFieldPagerdutyServiceKey:  cfg.ServiceKey,
+			AcFieldPagerdutyServiceName: cfg.ServiceName,
 		},
 	}
 }

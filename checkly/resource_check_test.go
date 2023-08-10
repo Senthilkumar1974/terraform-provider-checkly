@@ -30,10 +30,6 @@ func TestAccCheckRequiredFields(t *testing.T) {
 			Config:      config,
 			ExpectError: regexp.MustCompile(`The argument "frequency" is required, but no definition was found.`),
 		},
-		{
-			Config:      config,
-			ExpectError: regexp.MustCompile(`The argument "locations" is required, but no definition was found.`),
-		},
 	})
 }
 
@@ -44,7 +40,6 @@ func TestAccBrowserCheckInvalidInputs(t *testing.T) {
 		activated                 = "invalid"
 		should_fail               = "invalid"
 		double_check              = "invalid"
-		ssl_check                 = "invalid"
 		use_global_alert_settings = "invalid"
 		locations = "invalid"
 		script = 4
@@ -61,10 +56,6 @@ func TestAccBrowserCheckInvalidInputs(t *testing.T) {
 		{
 			Config:      config,
 			ExpectError: regexp.MustCompile(`Inappropriate value for attribute "should_fail"`),
-		},
-		{
-			Config:      config,
-			ExpectError: regexp.MustCompile(`Inappropriate value for attribute "ssl_check"`),
 		},
 		{
 			Config:      config,
@@ -353,6 +344,7 @@ var wantCheck = checkly.Check{
 	Muted:                false,
 	ShouldFail:           false,
 	Locations:            []string{"eu-west-1"},
+	PrivateLocations:     &[]string{},
 	Script:               "foo",
 	DegradedResponseTime: 15000,
 	MaxResponseTime:      30000,
@@ -367,7 +359,7 @@ var wantCheck = checkly.Check{
 		"foo",
 		"bar",
 	},
-	SSLCheck:            true,
+	SSLCheck:            false,
 	LocalSetupScript:    "bogus",
 	LocalTearDownScript: "bogus",
 	AlertSettings: checkly.AlertSettings{
@@ -375,15 +367,8 @@ var wantCheck = checkly.Check{
 		RunBasedEscalation: checkly.RunBasedEscalation{
 			FailedRunThreshold: 1,
 		},
-		TimeBasedEscalation: checkly.TimeBasedEscalation{
-			MinutesFailingThreshold: 5,
-		},
 		Reminders: checkly.Reminders{
 			Interval: 5,
-		},
-		SSLCertificates: checkly.SSLCertificates{
-			Enabled:        false,
-			AlertThreshold: 3,
 		},
 	},
 	UseGlobalAlertSettings: false,
@@ -440,7 +425,6 @@ const browserCheck_basic = `
 		should_fail               = false
 		frequency                 = 720
 		double_check              = true
-		ssl_check                 = true
 		use_global_alert_settings = true
 		locations                 = [ "us-east-1", "eu-central-1" ]
 		tags                      = [ "browser", "e2e" ]
@@ -475,11 +459,10 @@ const apiCheck_full = `
   resource "checkly_check" "test" {
 	name                   = "apiCheck_full"
 	type                   = "API"
-	frequency              = 10
+	frequency              = 120
 	activated              = true
 	muted                  = true
 	double_check           = true
-	ssl_check              = false
 	degraded_response_time = 15000
 	max_response_time      = 30000
 	environment_variables  = null
@@ -523,7 +506,7 @@ const apiCheck_full = `
 		target     = "100"
 	  }
 	}
-  
+
 	alert_settings {
 	  escalation_type = "RUN_BASED"
 	  reminders {
@@ -532,13 +515,6 @@ const apiCheck_full = `
 	  }
 	  run_based_escalation {
 		failed_run_threshold = 1
-	  }
-	  ssl_certificates {
-		alert_threshold = 30
-		enabled         = true
-	  }
-	  time_based_escalation {
-		minutes_failing_threshold = 5
 	  }
 	}
   }

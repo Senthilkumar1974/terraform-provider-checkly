@@ -24,6 +24,10 @@ func testAccPreCheck(t *testing.T) {
 	if os.Getenv("CHECKLY_API_KEY") == "" {
 		t.Fatal("CHECKLY_API_KEY must be set for acceptance tests")
 	}
+
+	if os.Getenv("CHECKLY_ACCOUNT_ID") == "" {
+		t.Fatal("CHECKLY_ACCOUNT_ID must be set for acceptance tests")
+	}
 }
 
 func accTestCase(t *testing.T, steps []resource.TestStep) {
@@ -37,9 +41,9 @@ func accTestCase(t *testing.T, steps []resource.TestStep) {
 	})
 }
 
-//test resource using regular expressions
-//this helps testing arrays which have irregular indices;
-//needed because we get things like "alert_settings.2888461220.escalation_type": "RUN_BASED"
+// test resource using regular expressions
+// this helps testing arrays which have irregular indices;
+// needed because we get things like "alert_settings.2888461220.escalation_type": "RUN_BASED"
 func testCheckResourceAttrExpr(resource, attrExpr, value string) func(s *terraform.State) error {
 	return func(s *terraform.State) error {
 		if len(s.Modules) < 1 {
